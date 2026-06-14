@@ -17,13 +17,14 @@ VSVersionInfo(
           '040904B0',
           [StringStruct('CompanyName', 'lichenlong0226-cyber'),
            StringStruct('FileDescription', 'PDFConverter - Word/Excel to PDF Converter'),
-           StringStruct('FileVersion', '1.0.0.0'),
+           StringStruct('FileVersion', '1.1.2.0'),
            StringStruct('InternalName', 'PDFConverter'),
            StringStruct('LegalCopyright', ''),
            StringStruct('OriginalFilename', 'PDFConverter.exe'),
            StringStruct('ProductName', 'PDFConverter'),
-           StringStruct('ProductVersion', '1.0.0.0')])
+           StringStruct('ProductVersion', '1.1.2.0')])
       ]),
     VarFileInfo([VarStruct('Translation', [1033, 1200])])
   ]
 )
+

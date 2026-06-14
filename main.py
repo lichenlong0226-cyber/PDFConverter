@@ -57,7 +57,7 @@ SUPPORTED_EXT = (".doc", ".docx", ".xls", ".xlsx", ".xlsm", ".xlsb",
 
 # ----------------- CONFIG -----------------
 APP_NAME = "PDFConverter"
-APP_VERSION = "1.1.1"
+APP_VERSION = "1.1.2"
 GITHUB_OWNER = "lichenlong0226-cyber"
 GITHUB_REPO = "pdf"
 ASSET_PREFIX = f"{APP_NAME}-setup-"
@@ -378,7 +378,7 @@ class ConverterApp(QWidget):
         # ---- 输出目录行 ----
         out_row = QHBoxLayout()
         self.out_edit = QLineEdit()
-        self.out_edit.setPlaceholderText("输出目录（留空为当前目录）")
+        self.out_edit.setPlaceholderText("输出目录（留空为桌面）")
         self.btn_out = QPushButton("选择目录")
         self.btn_out.setFixedWidth(100)
         out_row.addWidget(QLabel("输出:"))
@@ -398,7 +398,7 @@ class ConverterApp(QWidget):
         self.progress.setFormat("就绪")
         self.btn_convert = QPushButton("▶ 开始转换")
         self.btn_convert.setFixedWidth(110)
-        self.btn_convert.setStyleSheet("QPushButton { background: #2d7d2d; color: white; font-weight: bold; } QPushButton:hover { background: #3a9a3a; }")
+        self.btn_convert.setStyleSheet("QPushButton { background: #89b4fa; color: #1e1e2e; font-weight: bold; border: none; border-radius: 5px; padding: 6px 16px; } QPushButton:hover { background: #b4d0fb; } QPushButton:pressed { background: #74c7ec; }")
         self.btn_cancel = QPushButton("取消")
         self.btn_cancel.setFixedWidth(80)
         self.btn_convert.clicked.connect(self.start_conversion)
@@ -433,24 +433,29 @@ class ConverterApp(QWidget):
         self.update_timer.timeout.connect(lambda: self.check_for_updates(background=True))
         self.update_timer.start()
 
-        self.output_dir = os.getcwd()
+        self.output_dir = str(Path.home() / "Desktop")
         self.cancel_requested = False
 
     def _apply_style(self):
         self.setStyleSheet("""
-            QWidget { font-family: "Segoe UI", Arial, sans-serif; font-size: 12px; background: #252525; color: #ddd; }
-            QPushButton { padding: 5px 14px; border: 1px solid #555; border-radius: 3px; background: #383838; }
-            QPushButton:hover { background: #4a4a4a; }
-            QPushButton:pressed { background: #555; }
-            QTableWidget { background: #1e1e1e; alternate-background-color: #222; border: 1px solid #333; gridline-color: #333; border-radius: 3px; font-size: 11px; }
-            QTableWidget::item { padding: 4px 6px; }
-            QHeaderView::section { background: #2d2d2d; color: #aaa; padding: 4px; border: 1px solid #3a3a3a; font-size: 11px; font-weight: bold; }
-            QProgressBar { background: #1e1e1e; border: 1px solid #444; border-radius: 3px; text-align: center; color: #ccc; font-size: 11px; }
-            QProgressBar::chunk { background: #2d7d2d; border-radius: 2px; }
-            QCheckBox { spacing: 6px; }
-            QCheckBox::indicator { width: 16px; height: 16px; }
-            QLineEdit { background: #1e1e1e; border: 1px solid #444; border-radius: 3px; padding: 4px 6px; color: #ddd; }
-            QTextEdit { background: #1a1a1a; color: #c0c0c0; font-family: Consolas, monospace; font-size: 10px; border: 1px solid #333; }
+            QWidget { font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif; font-size: 12px; background: #1e1e2e; color: #cdd6f4; }
+            QPushButton { padding: 6px 16px; border: 1px solid #45475a; border-radius: 5px; background: #313244; color: #cdd6f4; }
+            QPushButton:hover { background: #45475a; border-color: #585b70; }
+            QPushButton:pressed { background: #585b70; }
+            QTableWidget { background: #181825; alternate-background-color: #1e1e2e; border: 1px solid #313244; gridline-color: #313244; border-radius: 5px; font-size: 11px; outline: none; }
+            QTableWidget::item { padding: 5px 8px; border-radius: 3px; }
+            QTableWidget::item:selected { background: #45475a; color: #cdd6f4; }
+            QHeaderView::section { background: #313244; color: #a6adc8; padding: 5px 8px; border: none; border-bottom: 1px solid #45475a; font-size: 11px; font-weight: 600; }
+            QProgressBar { background: #181825; border: 1px solid #313244; border-radius: 4px; text-align: center; color: #a6adc8; font-size: 11px; }
+            QProgressBar::chunk { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #89b4fa, stop:1 #74c7ec); border-radius: 3px; }
+            QCheckBox { spacing: 8px; color: #cdd6f4; }
+            QCheckBox::indicator { width: 18px; height: 18px; border-radius: 3px; border: 1px solid #585b70; background: #313244; }
+            QCheckBox::indicator:checked { background: #89b4fa; border-color: #89b4fa; }
+            QLineEdit { background: #181825; border: 1px solid #313244; border-radius: 5px; padding: 5px 8px; color: #cdd6f4; selection-background-color: #45475a; }
+            QLineEdit:focus { border-color: #89b4fa; }
+            QTextEdit { background: #11111b; color: #a6adc8; font-family: Consolas, "Cascadia Code", monospace; font-size: 10px; border: 1px solid #313244; border-radius: 4px; padding: 4px; }
+            QLabel { color: #cdd6f4; }
+            QFrame { color: #313244; }
         """)
 
     def _update_file_count(self):
@@ -742,6 +747,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
