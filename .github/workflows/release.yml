@@ -37,7 +37,7 @@ jobs:
 
       - name: Build exe with PyInstaller
         run: |
-          pyinstaller --noconfirm --onefile --windowed --icon=app_icon.ico --hidden-import pythoncom --collect-all win32com --hidden-import pypdf main.py
+          pyinstaller --noconfirm --onefile --windowed --icon=app_icon.ico --hidden-import pythoncom --collect-all win32com --collect-all pypdf --version-file file_version_info.txt main.py
           mkdir release_artifacts
           copy dist\main.exe release_artifacts\PDFConverter.exe
         shell: cmd
@@ -85,5 +85,6 @@ jobs:
             release_artifacts/PDFConverter-setup-${{ steps.get_version.outputs.TAG }}.exe \
             release_artifacts/PDFConverter-setup-${{ steps.get_version.outputs.TAG }}.exe.sha256 \
             --clobber
+
 
 
