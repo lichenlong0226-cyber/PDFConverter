@@ -57,7 +57,7 @@ SUPPORTED_EXT = (".doc", ".docx", ".xls", ".xlsx", ".xlsm", ".xlsb",
 
 # ----------------- CONFIG -----------------
 APP_NAME = "PDFConverter"
-APP_VERSION = "1.1.7"
+APP_VERSION = "1.1.8"
 GITHUB_OWNER = "lichenlong0226-cyber"
 GITHUB_REPO = "PDFConverter"
 ASSET_PREFIX = f"{APP_NAME}-setup-"
@@ -776,13 +776,24 @@ class ConverterApp(QWidget):
                 except Exception:
                     launch_path = tmp_installer
 
+                # Unblock downloaded file (remove MOTW from Smart App Control)
+                try:
+                    import subprocess
+                    subprocess.run(
+                        ["powershell", "-NoProfile", "-Command",
+                         f'Unblock-File "{launch_path}"'],
+                        capture_output=True, timeout=15
+                    )
+                except Exception:
+                    pass
+
                 launched = False
-                # Method 1: PowerShell Start-Process -Verb RunAs
+                # Method 1: PowerShell Unblock + Start-Process -Verb RunAs
                 try:
                     import subprocess
                     subprocess.Popen(
                         ["powershell", "-NoProfile", "-Command",
-                         f'Start-Process -FilePath "{launch_path}" -Verb RunAs'],
+                         f'Unblock-File "{launch_path}"; Start-Process -FilePath "{launch_path}" -Verb RunAs'],
                         creationflags=0x08000000
                     )
                     launched = True
@@ -831,6 +842,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
