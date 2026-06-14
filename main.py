@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 PDFConverter: Word/Excel -> PDF 转换器（PySide6 GUI）
 功能：
@@ -814,11 +814,11 @@ class ConverterApp(QWidget):
     def show_about(self):
         QMessageBox.about(self, f"关于 {APP_NAME}",
             f"<h3>{APP_NAME}</h3>"
-            f"<p>版本 {APP_VERSION}</p>"
+            f"<p>版本 {APP_VERSION}</p><p>{GITHUB_OWNER}/{GITHUB_REPO}</p>"
             f"<p>Word/Excel → PDF 转换器（PySide6 GUI）</p>"
             f"<hr>"
-            f"<p>支持格式：doc/docx/xls/xlsx/pdf/odt/ods/rtf</p>"
-            f"<p>功能：批量转换、多线程、PDF合并、自动更新</p>"
+            f"<p>支持格式：doc, docx, xls, xlsx, pdf, odt, ods, rtf, docm, xlsm, xlsb</p>"
+            f"<p>批量转换 · 多线程并发 · PDF合并 · SHA256校验 · 自动更新</p>"
             f"<hr>"
             f"<p><a href='https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}'>GitHub</a></p>"
         )
@@ -831,6 +831,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 

@@ -1,25 +1,102 @@
-# PDFConverter
+﻿# OfficePDF
 
-Word/Excel -> PDF 转换器（PySide6 GUI）
+> Word / Excel → PDF 批量转换器 · PySide6 GUI
 
-快速上手
-1. 在 main.py 顶部确认 GITHUB_OWNER 与 GITHUB_REPO 已设置为你的仓库（当前已设为 lichenlong0226-cyber/pdf）。
-2. 在仓库根放入 app_icon.ico（可选），或删除 workflow 中的 --icon 参数。
-3. 本地测试（可选）:
-   - python -m venv venv
-   - venv\\Scripts\\activate
-   - pip install PySide6 pypdf requests pywin32
-   - python main.py
+Office 文档转 PDF 的桌面工具，支持批量拖拽、多线程并发、PDF 合并、自动更新。
 
-自动构建与发布（Actions）
-- 将这些文件提交并 push 到仓库，然后创建并 push 一个 tag（例如 v1.0.0）：
-  git tag v1.0.0
-  git push origin v1.0.0
+---
 
-- GitHub Actions 会在 windows-latest runner 上：
-  - 用 PyInstaller 生成 single-file exe
-  - 用 NSIS 生成安装器 MyConverter-setup-<version>.exe
-  - 计算 SHA256，并把安装器与 .sha256 上传为 Release asset
+## ✨ 功能
 
-自动更新（客户端）
-- 程序会请求 GitHub Releases 的 latest，如果发现新版本会下载 installer + .sha256 做 SHA256 校验，校验通过则运行安装器。
+| 功能 | 说明 |
+|------|------|
+| **批量转换** | 拖拽或添加多个 Word/Excel 文件，一键全部转 PDF |
+| **多线程并发** | 最多 3 个任务同时转换，充分利用多核 CPU |
+| **高保真输出** | Windows 下调用 Office COM 引擎，排版与原文档一致 |
+| **LibreOffice 回退** | 无 Office 时自动使用 LibreOffice 转换 |
+| **PDF 合并** | 转换完成后可将所有 PDF 合并为一个文件 |
+| **混合支持** | 支持直接拖入已有 PDF，与转换结果一起合并 |
+| **拖拽排序** | 文件列表可拖拽调整顺序，合并时保持页面顺序 |
+| **SHA256 校验** | 自动更新下载的安装包经过校验，防止篡改 |
+| **自动更新** | 内置更新检测，有新版本时一键下载安装 |
+
+### 支持格式
+
+**输入：** .doc .docx .docm .rtf .xls .xlsx .xlsm .xlsb .odt .ods .pdf
+**输出：** .pdf
+
+---
+
+## 📦 下载安装
+
+从 [Releases](https://github.com/lichenlong0226-cyber/pdf/releases) 下载最新安装包：
+
+`
+PDFConverter-setup-v1.1.6.exe
+`
+
+直接双击安装，桌面会生成快捷方式。
+
+> ⚠ 若 Windows Smarrt App Control 拦截，右键安装包 → **属性** → **解除锁定** → 确定
+
+---
+
+## 🚀 使用
+
+1. 启动程序
+2. 将 Word/Excel/PDF 拖入文件列表，或点击「添加文件」
+3. （可选）选择输出目录，留空则输出到桌面 PDFConverter_output 文件夹
+4. （可选）勾选「合并为单个 PDF」
+5. 点击「开始转换」
+6. 完成后自动打开输出文件夹
+
+---
+
+## 🔧 本地开发
+
+`ash
+git clone https://github.com/lichenlong0226-cyber/pdf.git
+cd pdf
+python -m venv venv
+venv\Scripts\activate
+pip install PySide6 pypdf requests pywin32
+python main.py
+`
+
+---
+
+## 🏗 自动构建与发布
+
+每次推送 * 格式的 tag，GitHub Actions 自动完成：
+
+1. PyInstaller 打包为单文件 exe
+2. NSIS 生成安装包
+3. 计算 SHA256 校验文件
+4. 创建 GitHub Release 并上传资产
+
+`ash
+# 推送代码
+git push origin main
+
+# 打标签触发构建
+git tag v1.1.7
+git push origin v1.1.7
+`
+
+---
+
+## 🧱 技术栈
+
+- Python 3.10 — 核心语言
+- PySide6 — 桌面 GUI
+- PyInstaller — 打包 exe
+- NSIS — 安装包制作
+- pypdf — PDF 合并
+- pywin32 — Windows Office COM 调用
+- GitHub Actions — CI/CD
+
+---
+
+## 📄 开源
+
+MIT License
