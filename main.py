@@ -57,7 +57,7 @@ SUPPORTED_EXT = (".doc", ".docx", ".xls", ".xlsx", ".xlsm", ".xlsb",
 
 # ----------------- CONFIG -----------------
 APP_NAME = "PDFConverter"
-APP_VERSION = "1.2.1"
+APP_VERSION = "1.2.2"
 GITHUB_OWNER = "lichenlong0226-cyber"
 GITHUB_REPO = "PDFConverter"
 ASSET_PREFIX = f"{APP_NAME}-setup-"
@@ -233,18 +233,6 @@ class DropTable(QTableWidget):
             self.clearSelection()
             self.setCurrentIndex(QModelIndex())
         super().mousePressEvent(event)
-
-    def dragEnterEvent(self, event):
-        if event.source() == self or event.mimeData().hasUrls():
-            event.acceptProposedAction()
-        else:
-            event.ignore()
-
-    def dragMoveEvent(self, event):
-        if event.source() == self or event.mimeData().hasUrls():
-            event.acceptProposedAction()
-        else:
-            event.ignore()
 
     def dropEvent(self, event):
         if event.source() == self:
@@ -425,7 +413,7 @@ class ConverterApp(QWidget):
         ops_row.addWidget(self.progress, stretch=1)
         ops_row.addWidget(self.btn_convert)
         ops_row.addWidget(self.btn_cancel)
-        main_layout.addLayout(out_row)
+        main_layout.addLayout(ops_row)
 
         # ---- 日志面板（默认折叠） ----
         self.log_toggle = QPushButton("▶ 显示日志")
@@ -824,6 +812,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
 
 
