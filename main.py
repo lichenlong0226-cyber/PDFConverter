@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 PDFConverter: Word/Excel -> PDF 转换器（PySide6 GUI）
 功能：
@@ -57,7 +57,7 @@ SUPPORTED_EXT = (".doc", ".docx", ".xls", ".xlsx", ".xlsm", ".xlsb",
 
 # ----------------- CONFIG -----------------
 APP_NAME = "PDFConverter"
-APP_VERSION = "1.1.5"
+APP_VERSION = "1.1.6"
 GITHUB_OWNER = "lichenlong0226-cyber"
 GITHUB_REPO = "pdf"
 ASSET_PREFIX = f"{APP_NAME}-setup-"
@@ -273,6 +273,15 @@ class DropTable(QTableWidget):
         if added > 0:
             self.parent()._update_file_count()
 
+    @staticmethod
+    def _file_emoji(path):
+        ext = Path(path).suffix.lower()
+        if ext in (".doc", ".docx", ".docm", ".rtf"): return "📝 "
+        if ext in (".xls", ".xlsx", ".xlsm", ".xlsb"): return "📊 "
+        if ext == ".pdf": return "📄 "
+        if ext in (".odt", ".ods"): return "📃 "
+        return "📁 "
+
     def add_file(self, path):
         if not os.path.exists(path):
             return False
@@ -280,12 +289,14 @@ class DropTable(QTableWidget):
         if ext not in SUPPORTED_EXT:
             return False
         for row in range(self.rowCount()):
-            if self.item(row, 0).text() == path:
+            if self.item(row, 0).data(Qt.UserRole) == path:
                 return False
         row = self.rowCount()
         self.insertRow(row)
         size_text = f"{Path(path).stat().st_size // 1024} KB"
-        self.setItem(row, 0, QTableWidgetItem(path))
+        item = QTableWidgetItem(self._file_emoji(path) + os.path.basename(path))
+        item.setData(Qt.UserRole, path)
+        self.setItem(row, 0, item)
         item_status = QTableWidgetItem("待处理")
         item_status.setTextAlignment(Qt.AlignCenter)
         self.setItem(row, 1, item_status)
@@ -298,7 +309,7 @@ class DropTable(QTableWidget):
         row = self.indexAt(pos).row()
         if row < 0:
             return
-        path = self.item(row, 0).text()
+        path = self.item(row, 0).data(Qt.UserRole)
         menu = QMenu()
         open_act = QAction("打开文件所在目录", self)
         open_act.triggered.connect(lambda: self._open_folder(path))
@@ -349,9 +360,13 @@ class ConverterApp(QWidget):
         top.addWidget(title)
         top.addStretch()
         self.btn_check_update = QPushButton(f"检查更新 v{APP_VERSION}")
-        self.btn_check_update.setFixedWidth(100)
+        self.btn_check_update.setFixedWidth(130)
         self.btn_check_update.clicked.connect(self.manual_check_update)
         top.addWidget(self.btn_check_update)
+        self.btn_about = QPushButton("关于")
+        self.btn_about.setFixedWidth(60)
+        self.btn_about.clicked.connect(self.show_about)
+        top.addWidget(self.btn_about)
         main_layout.addLayout(top)
 
         # ---- 文件计数 ----
@@ -360,8 +375,13 @@ class ConverterApp(QWidget):
         main_layout.addWidget(self.lbl_status)
 
         # ---- 文件列表 ----
+        file_group = QGroupBox("文件列表（拖拽排序 / 从外部添加）")
+        file_group.setStyleSheet("QGroupBox { font-weight: bold; color: #a6adc8; border: 1px solid #313244; border-radius: 6px; margin-top: 10px; padding-top: 16px; } QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 5px; }")
+        file_layout = QVBoxLayout(file_group)
+        file_layout.setContentsMargins(6, 6, 6, 6)
         self.table = DropTable(self)
-        main_layout.addWidget(self.table, stretch=1)
+        file_layout.addWidget(self.table, stretch=1)
+        main_layout.addWidget(file_group, stretch=1)
 
         # ---- 按钮行 ----
         btn_row = QHBoxLayout()
@@ -377,13 +397,12 @@ class ConverterApp(QWidget):
         self.btn_clear.clicked.connect(self.clear_all)
         main_layout.addLayout(btn_row)
 
-        # ---- 分割线 ----
-        sep = QFrame()
-        sep.setFrameShape(QFrame.HLine)
-        sep.setStyleSheet("color: #333;")
-        main_layout.addWidget(sep)
+        out_group = QGroupBox("输出设置")
+        out_group.setStyleSheet("QGroupBox { font-weight: bold; color: #a6adc8; border: 1px solid #313244; border-radius: 6px; margin-top: 10px; padding-top: 16px; } QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 5px; }")
+        out_layout = QVBoxLayout(out_group)
+        out_layout.setContentsMargins(8, 8, 8, 8)
+        out_layout.setSpacing(6)
 
-        # ---- 输出目录行 ----
         out_row = QHBoxLayout()
         self.out_edit = QLineEdit()
         self.out_edit.setPlaceholderText("输出目录（留空则使用桌面/PDFConverter_output）")
@@ -393,7 +412,7 @@ class ConverterApp(QWidget):
         out_row.addWidget(self.out_edit, stretch=1)
         out_row.addWidget(self.btn_out)
         self.btn_out.clicked.connect(self.choose_out_dir)
-        main_layout.addLayout(out_row)
+        out_layout.addLayout(out_row)
 
         # ---- 操作行 ----
         ops_row = QHBoxLayout()
@@ -406,7 +425,7 @@ class ConverterApp(QWidget):
         self.progress.setFormat("就绪")
         self.btn_convert = QPushButton("▶ 开始转换")
         self.btn_convert.setFixedWidth(110)
-        self.btn_convert.setStyleSheet("QPushButton { background: #89b4fa; color: #1e1e2e; font-weight: bold; border: none; border-radius: 5px; padding: 6px 16px; } QPushButton:hover { background: #b4d0fb; } QPushButton:pressed { background: #74c7ec; }")
+        self.btn_convert.setStyleSheet("QPushButton { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #89b4fa, stop:1 #74c7ec); color: #1e1e2e; font-weight: bold; border: none; border-radius: 6px; padding: 7px 18px; } QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #b4d0fb, stop:1 #89dcf0); } QPushButton:pressed { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #74c7ec, stop:1 #89b4fa); }")
         self.btn_cancel = QPushButton("取消")
         self.btn_cancel.setFixedWidth(80)
         self.btn_convert.clicked.connect(self.start_conversion)
@@ -415,7 +434,8 @@ class ConverterApp(QWidget):
         ops_row.addWidget(self.progress, stretch=1)
         ops_row.addWidget(self.btn_convert)
         ops_row.addWidget(self.btn_cancel)
-        main_layout.addLayout(ops_row)
+        out_layout.addLayout(ops_row)
+        main_layout.addWidget(out_group)
 
         # ---- 日志面板（默认折叠） ----
         self.log_toggle = QPushButton("▶ 显示日志")
@@ -432,6 +452,11 @@ class ConverterApp(QWidget):
         main_layout.addWidget(self.log_edit)
 
         # ---- 状态 ----
+        # ---- 状态栏 ----
+        self.status_bar = QLabel("就绪")
+        self.status_bar.setStyleSheet("color: #6c7086; font-size: 11px; padding: 2px 4px; border-top: 1px solid #313244;")
+        main_layout.addWidget(self.status_bar)
+
         self.pool = QThreadPool.globalInstance()
         self.pool.setMaxThreadCount(MAX_WORKERS)
         self.active_workers = {}
@@ -470,6 +495,7 @@ class ConverterApp(QWidget):
         count = self.table.rowCount()
         self.lbl_status.setText(f"已添加 {count} 个文件   |   拖拽或点击「添加文件」")
         self.lbl_status.repaint()
+        self.status_bar.setText(f"就绪  |  文件: {count}  |  输出: {self.output_dir}")
 
     def _toggle_log(self, checked):
         self.log_edit.setVisible(checked)
@@ -545,12 +571,13 @@ class ConverterApp(QWidget):
         self.progress.setFormat(f"0 / {n}")
         self.cancel_requested = False
         self.append_log(f"开始转换：{n} 个文件 → {self.output_dir}")
+        self.status_bar.setText(f"转换中  |  剩余: {n}  |  输出: {self.output_dir}")
 
         self.pdfs_generated = []
         self.remaining = n
 
         for i in range(n):
-            in_path = self.table.item(i, 0).text()
+            in_path = self.table.item(i, 0).data(Qt.UserRole)
             self.table.setItem(i, 1, QTableWidgetItem("等待中"))
             worker = ConvertWorker(in_path, self.output_dir)
             worker.signals.started.connect(lambda p: self.on_started(p))
@@ -562,7 +589,7 @@ class ConverterApp(QWidget):
     def on_started(self, path):
         self.append_log(f"[启动] {Path(path).name}")
         for r in range(self.table.rowCount()):
-            if self.table.item(r, 0).text() == path:
+            if self.table.item(r, 0).data(Qt.UserRole) == path:
                 item = QTableWidgetItem("处理中")
                 item.setTextAlignment(Qt.AlignCenter)
                 self.table.setItem(r, 1, item)
@@ -573,7 +600,7 @@ class ConverterApp(QWidget):
     def on_finished(self, path, out_or_err):
         self.active_workers.pop(path, None)
         for r in range(self.table.rowCount()):
-            if self.table.item(r, 0).text() == path:
+            if self.table.item(r, 0).data(Qt.UserRole) == path:
                 if out_or_err.startswith("ERR:"):
                     item = QTableWidgetItem("❌ 失败")
                     item.setTextAlignment(Qt.AlignCenter)
@@ -784,6 +811,18 @@ class ConverterApp(QWidget):
             QMessageBox.warning(self, "更新失败", f"下载/运行安装器失败：{e}")
 
 
+    def show_about(self):
+        QMessageBox.about(self, f"关于 {APP_NAME}",
+            f"<h3>{APP_NAME}</h3>"
+            f"<p>版本 {APP_VERSION}</p>"
+            f"<p>Word/Excel → PDF 转换器（PySide6 GUI）</p>"
+            f"<hr>"
+            f"<p>支持格式：doc/docx/xls/xlsx/pdf/odt/ods/rtf</p>"
+            f"<p>功能：批量转换、多线程、PDF合并、自动更新</p>"
+            f"<hr>"
+            f"<p><a href='https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}'>GitHub</a></p>"
+        )
+
 def main():
     app = QApplication(sys.argv)
     w = ConverterApp()
@@ -792,6 +831,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
 
 
