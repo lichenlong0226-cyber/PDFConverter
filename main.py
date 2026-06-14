@@ -57,7 +57,7 @@ SUPPORTED_EXT = (".doc", ".docx", ".xls", ".xlsx", ".xlsm", ".xlsb",
 
 # ----------------- CONFIG -----------------
 APP_NAME = "PDFConverter"
-APP_VERSION = "1.2.6"
+APP_VERSION = "1.2.7"
 GITHUB_OWNER = "lichenlong0226-cyber"
 GITHUB_REPO = "PDFConverter"
 ASSET_PREFIX = f"{APP_NAME}-setup-"
@@ -214,9 +214,9 @@ class ConvertWorker(QRunnable):
 
 class DropTable(QTableWidget):
     def __init__(self, parent=None):
-        super().__init__(0, 3, parent)
-        self.setHorizontalHeaderLabels(["文件", "状态", "大小"])
-        self.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        super().__init__(0, 4, parent)
+        self.setHorizontalHeaderLabels(["序号", "文件", "状态", "大小"])
+        self.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents); self.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
         self.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -227,6 +227,16 @@ class DropTable(QTableWidget):
         self.setDragDropMode(QAbstractItemView.InternalMove)
         self.verticalHeader().setVisible(False)
 
+    def _renumber_rows(self):
+        for i in range(self.rowCount()):
+            num_item = self.item(i, 0)
+            if num_item is None:
+                num_item = QTableWidgetItem(str(i + 1))
+                num_item.setTextAlignment(Qt.AlignCenter)
+                self.setItem(i, 0, num_item)
+            else:
+                num_item.setText(str(i + 1))
+
     def mousePressEvent(self, event):
         index = self.indexAt(event.pos())
         if not index.isValid():
@@ -235,23 +245,39 @@ class DropTable(QTableWidget):
         super().mousePressEvent(event)
 
     def dragEnterEvent(self, event):
-        if event.mimeData().hasUrls():
-            event.setDropAction(Qt.CopyAction)
-            event.accept()
+        if event.mimeData().hasUrls() or event.source() == self:
+            event.acceptProposedAction()
         else:
             event.ignore()
 
     def dragMoveEvent(self, event):
-        if event.mimeData().hasUrls():
-            event.setDropAction(Qt.CopyAction)
-            event.accept()
+        if event.mimeData().hasUrls() or event.source() == self:
+            event.acceptProposedAction()
         else:
             event.ignore()
 
     def dropEvent(self, event):
         if event.source() == self:
-            super().dropEvent(event)
-            self.parent()._update_file_count()
+            try:
+                pos = event.position().toPoint()
+            except:
+                pos = event.pos()
+            idx = self.indexAt(pos)
+            target = idx.row() if idx.isValid() else self.rowCount() - 1
+            sel = self.selectedItems()
+            if sel:
+                src = min(it.row() for it in sel)
+                if src < target:
+                    target += 1
+                data = [self.takeItem(src, c) for c in range(4)]
+                self.removeRow(src)
+                self.insertRow(target)
+                for c, it in enumerate(data):
+                    if it:
+                        self.setItem(target, c, it)
+                self.selectRow(target)
+                self._renumber_rows()
+                self.parent()._update_file_count()
             return
         if not event.mimeData().hasUrls():
             event.ignore()
@@ -298,7 +324,7 @@ class DropTable(QTableWidget):
         self.insertRow(row)
         size_text = f"{Path(path).stat().st_size // 1024} KB"
         item = QTableWidgetItem(path); item.setData(Qt.UserRole, path)
-        self.setItem(row, 0, item)
+        self.setItem(row, 1, item)
         item_status = QTableWidgetItem("待处理")
         item_status.setTextAlignment(Qt.AlignCenter)
         self.setItem(row, 1, item_status)
@@ -311,7 +337,7 @@ class DropTable(QTableWidget):
         row = self.indexAt(pos).row()
         if row < 0:
             return
-        path = self.item(row, 0).data(Qt.UserRole)
+        path = self.item(row, 1).data(Qt.UserRole)
         menu = QMenu()
         open_act = QAction("打开文件所在目录", self)
         open_act.triggered.connect(lambda: self._open_folder(path))
@@ -455,6 +481,7 @@ class ConverterApp(QWidget):
 
         self.output_dir = str(Path.home() / "Desktop" / "PDFConverter_output")
         self.cancel_requested = False
+        self._result_map = {}
 
     def _apply_style(self):
         self.setStyleSheet("""
@@ -553,6 +580,7 @@ class ConverterApp(QWidget):
         self.progress.setValue(0)
         self.progress.setFormat(f"0 / {n}")
         self.cancel_requested = False
+        self._result_map = {}
         self.append_log(f"开始转换：{n} 个文件 → {self.output_dir}")
 
         self.pdfs_generated = []
@@ -593,7 +621,7 @@ class ConverterApp(QWidget):
                     item.setTextAlignment(Qt.AlignCenter)
                     self.table.setItem(r, 1, item)
                     self.append_log(f"[完成] {Path(path).name} -> {Path(out_or_err).name}")
-                    self.pdfs_generated.append(out_or_err)
+                    self.pdfs_generated.append(out_or_err); self._result_map[self.table.item(r, 1).data(Qt.UserRole)] = out_or_err
                 break
         done = self.progress.value() + 1
         self.progress.setValue(done)
@@ -620,8 +648,12 @@ class ConverterApp(QWidget):
             return
         merger = PdfWriter()
         try:
-            for p in self.pdfs_generated:
-                merger.append(p)
+            for row in range(self.table.rowCount()):
+                fp = self.table.item(row, 1).data(Qt.UserRole)
+                if fp in self._result_map:
+                    p = self._result_map[fp]
+                    if not p.startswith("ERR:"):
+                        merger.append(p)
             merger.write(merged_name)
             try:
                 subprocess.Popen(f"explorer /select,\"{merged_name}\"")
@@ -811,6 +843,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
 
 
