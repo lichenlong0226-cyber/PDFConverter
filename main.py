@@ -57,7 +57,7 @@ SUPPORTED_EXT = (".doc", ".docx", ".xls", ".xlsx", ".xlsm", ".xlsb",
 
 # ----------------- CONFIG -----------------
 APP_NAME = "PDFConverter"
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.1.1"
 GITHUB_OWNER = "lichenlong0226-cyber"
 GITHUB_REPO = "pdf"
 ASSET_PREFIX = f"{APP_NAME}-setup-"
@@ -719,9 +719,13 @@ class ConverterApp(QWidget):
                     return
 
             if IS_WINDOWS:
-                subprocess.Popen([tmp_installer], shell=False)
-                self.append_log("安装程序已启动。")
-                QMessageBox.information(self, "更新", "安装程序已启动，安装完成后请重新启动程序。")
+                try:
+                    import ctypes
+                    ctypes.windll.shell32.ShellExecuteW(None, "runas", tmp_installer, None, None, 1)
+                except Exception:
+                    subprocess.Popen([tmp_installer], shell=False)
+                self.append_log("安装程序已启动（可能需要确认管理员权限）。")
+                QMessageBox.information(self, "更新", "安装程序已启动，请在弹出的 UAC 对话框中点击「是」以完成安装。")
             else:
                 self.append_log("自动安装仅支持 Windows。")
                 QMessageBox.information(self, "更新", "已下载更新，但自动安装仅支持 Windows。")
@@ -738,6 +742,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
 
 
