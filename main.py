@@ -57,7 +57,7 @@ SUPPORTED_EXT = (".doc", ".docx", ".xls", ".xlsx", ".xlsm", ".xlsb",
 
 # ----------------- CONFIG -----------------
 APP_NAME = "PDFConverter"
-APP_VERSION = "1.1.9"
+APP_VERSION = "1.2.0"
 GITHUB_OWNER = "lichenlong0226-cyber"
 GITHUB_REPO = "PDFConverter"
 ASSET_PREFIX = f"{APP_NAME}-setup-"
@@ -224,7 +224,7 @@ class DropTable(QTableWidget):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self._on_context_menu)
         self.setAcceptDrops(True)
-        self.setDragDropMode(QAbstractItemView.DragDrop); self.setDefaultDropAction(Qt.MoveAction)
+        self.setDragDropMode(QAbstractItemView.InternalMove)
         self.verticalHeader().setVisible(False)
 
     def mousePressEvent(self, event):
@@ -235,28 +235,19 @@ class DropTable(QTableWidget):
         super().mousePressEvent(event)
 
     def dragEnterEvent(self, event):
-        if event.source() == self:
+        if event.source() == self or event.mimeData().hasUrls():
             event.acceptProposedAction()
-        elif event.mimeData().hasUrls():
-            event.setDropAction(Qt.CopyAction)
-            event.accept()
         else:
             event.ignore()
 
     def dragMoveEvent(self, event):
-        if event.source() == self:
-            event.setDropAction(Qt.MoveAction)
-            event.accept()
-        elif event.mimeData().hasUrls():
-            event.setDropAction(Qt.CopyAction)
-            event.accept()
+        if event.source() == self or event.mimeData().hasUrls():
+            event.acceptProposedAction()
         else:
             event.ignore()
 
     def dropEvent(self, event):
         if event.source() == self:
-            event.setDropAction(Qt.MoveAction)
-            event.accept()
             super().dropEvent(event)
             self.parent()._update_file_count()
             return
@@ -304,8 +295,7 @@ class DropTable(QTableWidget):
         row = self.rowCount()
         self.insertRow(row)
         size_text = f"{Path(path).stat().st_size // 1024} KB"
-        item = QTableWidgetItem(self._file_emoji(path) + os.path.basename(path))
-        item.setData(Qt.UserRole, path)
+        item = QTableWidgetItem(path); item.setData(Qt.UserRole, path)
         self.setItem(row, 0, item)
         item_status = QTableWidgetItem("待处理")
         item_status.setTextAlignment(Qt.AlignCenter)
@@ -373,10 +363,6 @@ class ConverterApp(QWidget):
         self.btn_check_update.setFixedWidth(130)
         self.btn_check_update.clicked.connect(self.manual_check_update)
         top.addWidget(self.btn_check_update)
-        self.btn_about = QPushButton("关于")
-        self.btn_about.setFixedWidth(60)
-        self.btn_about.clicked.connect(self.show_about)
-        top.addWidget(self.btn_about)
         main_layout.addLayout(top)
 
         # ---- 文件计数 ----
@@ -385,13 +371,8 @@ class ConverterApp(QWidget):
         main_layout.addWidget(self.lbl_status)
 
         # ---- 文件列表 ----
-        file_group = QGroupBox("文件列表（拖拽排序 / 从外部添加）")
-        file_group.setStyleSheet("QGroupBox { font-weight: bold; color: #a6adc8; border: 1px solid #313244; border-radius: 6px; margin-top: 10px; padding-top: 16px; } QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 5px; }")
-        file_layout = QVBoxLayout(file_group)
-        file_layout.setContentsMargins(6, 6, 6, 6)
         self.table = DropTable(self)
-        file_layout.addWidget(self.table, stretch=1)
-        main_layout.addWidget(file_group, stretch=1)
+        main_layout.addWidget(self.table, stretch=1)
 
         # ---- 按钮行 ----
         btn_row = QHBoxLayout()
@@ -407,11 +388,11 @@ class ConverterApp(QWidget):
         self.btn_clear.clicked.connect(self.clear_all)
         main_layout.addLayout(btn_row)
 
-        out_group = QGroupBox("输出设置")
-        out_group.setStyleSheet("QGroupBox { font-weight: bold; color: #a6adc8; border: 1px solid #313244; border-radius: 6px; margin-top: 10px; padding-top: 16px; } QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 5px; }")
-        out_layout = QVBoxLayout(out_group)
-        out_layout.setContentsMargins(8, 8, 8, 8)
-        out_layout.setSpacing(6)
+        # ---- 分割线 ----
+        sep = QFrame()
+        sep.setFrameShape(QFrame.HLine)
+        sep.setStyleSheet("color: #d4d4d8;")
+        main_layout.addWidget(sep)
 
         out_row = QHBoxLayout()
         self.out_edit = QLineEdit()
@@ -435,7 +416,7 @@ class ConverterApp(QWidget):
         self.progress.setFormat("就绪")
         self.btn_convert = QPushButton("▶ 开始转换")
         self.btn_convert.setFixedWidth(110)
-        self.btn_convert.setStyleSheet("QPushButton { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3b82f6, stop:1 #93bbfc); color: #ffffff; font-weight: bold; border: none; border-radius: 6px; padding: 7px 18px; } QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #60a5fa, stop:1 #89dcf0); } QPushButton:pressed { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #93bbfc, stop:1 #3b82f6); }")
+        self.btn_convert.setStyleSheet("QPushButton { background: #3b82f6; color: #ffffff; font-weight: bold; border: none; border-radius: 3px; padding: 5px 14px; } QPushButton:hover { background: #60a5fa; } QPushButton:pressed { background: #2563eb; }")
         self.btn_cancel = QPushButton("取消")
         self.btn_cancel.setFixedWidth(80)
         self.btn_convert.clicked.connect(self.start_conversion)
@@ -444,8 +425,7 @@ class ConverterApp(QWidget):
         ops_row.addWidget(self.progress, stretch=1)
         ops_row.addWidget(self.btn_convert)
         ops_row.addWidget(self.btn_cancel)
-        out_layout.addLayout(ops_row)
-        main_layout.addWidget(out_group)
+        main_layout.addLayout(out_row)
 
         # ---- 日志面板（默认折叠） ----
         self.log_toggle = QPushButton("▶ 显示日志")
@@ -462,11 +442,6 @@ class ConverterApp(QWidget):
         main_layout.addWidget(self.log_edit)
 
         # ---- 状态 ----
-        # ---- 状态栏 ----
-        self.status_bar = QLabel("就绪")
-        self.status_bar.setStyleSheet("color: #6c7086; font-size: 11px; padding: 2px 4px; border-top: 1px solid #313244;")
-        main_layout.addWidget(self.status_bar)
-
         self.pool = QThreadPool.globalInstance()
         self.pool.setMaxThreadCount(MAX_WORKERS)
         self.active_workers = {}
@@ -482,31 +457,28 @@ class ConverterApp(QWidget):
     def _apply_style(self):
         self.setStyleSheet("""
             QWidget { font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif; font-size: 12px; background: #ffffff; color: #18181b; }
-            QPushButton { padding: 6px 16px; border: 1px solid #d4d4d8; border-radius: 5px; background: #f4f4f5; color: #18181b; }
-            QPushButton:hover { background: #e4e4e7; border-color: #a1a1aa; }
+            QPushButton { padding: 5px 14px; border: 1px solid #d4d4d8; border-radius: 3px; background: #f4f4f5; }
+            QPushButton:hover { background: #e4e4e7; }
             QPushButton:pressed { background: #d4d4d8; }
-            QTableWidget { background: #ffffff; alternate-background-color: #fafafa; border: 1px solid #e4e4e7; gridline-color: #e4e4e7; border-radius: 5px; font-size: 11px; outline: none; }
-            QTableWidget::item { padding: 5px 8px; border-radius: 3px; }
+            QTableWidget { background: #ffffff; alternate-background-color: #fafafa; border: 1px solid #e4e4e7; gridline-color: #e4e4e7; border-radius: 3px; font-size: 11px; }
+            QTableWidget::item { padding: 4px 6px; }
             QTableWidget::item:selected { background: #dbeafe; color: #1e40af; }
-            QHeaderView::section { background: #f4f4f5; color: #52525b; padding: 5px 8px; border: none; border-bottom: 1px solid #e4e4e7; font-size: 11px; font-weight: 600; }
-            QProgressBar { background: #f4f4f5; border: 1px solid #e4e4e7; border-radius: 4px; text-align: center; color: #52525b; font-size: 11px; }
-            QProgressBar::chunk { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3b82f6, stop:1 #60a5fa); border-radius: 3px; }
-            QCheckBox { spacing: 8px; color: #18181b; }
-            QCheckBox::indicator { width: 18px; height: 18px; border-radius: 3px; border: 1px solid #a1a1aa; background: #ffffff; }
-            QCheckBox::indicator:checked { background: #3b82f6; border-color: #3b82f6; }
-            QLineEdit { background: #ffffff; border: 1px solid #d4d4d8; border-radius: 5px; padding: 5px 8px; color: #18181b; selection-background-color: #dbeafe; }
+            QHeaderView::section { background: #f4f4f5; color: #52525b; padding: 4px; border: none; border-bottom: 1px solid #e4e4e7; font-size: 11px; font-weight: bold; }
+            QProgressBar { background: #f4f4f5; border: 1px solid #d4d4d8; border-radius: 3px; text-align: center; color: #52525b; font-size: 11px; }
+            QProgressBar::chunk { background: #3b82f6; border-radius: 2px; }
+            QCheckBox { spacing: 6px; color: #18181b; }
+            QCheckBox::indicator { width: 16px; height: 16px; border: 1px solid #a1a1aa; border-radius: 3px; background: #ffffff; }
+            QCheckBox::indicator:checked { background: #3b82f6; }
+            QLineEdit { background: #ffffff; border: 1px solid #d4d4d8; border-radius: 3px; padding: 4px 6px; color: #18181b; }
             QLineEdit:focus { border-color: #3b82f6; }
-            QTextEdit { background: #fafafa; color: #18181b; font-family: Consolas, "Cascadia Code", monospace; font-size: 10px; border: 1px solid #e4e4e7; border-radius: 4px; padding: 4px; }
+            QTextEdit { background: #fafafa; color: #18181b; font-family: Consolas, monospace; font-size: 10px; border: 1px solid #e4e4e7; border-radius: 3px; padding: 4px; }
             QLabel { color: #18181b; }
-            QGroupBox { font-weight: bold; color: #52525b; border: 1px solid #e4e4e7; border-radius: 6px; margin-top: 10px; padding-top: 16px; }
-            QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 5px; }
         """)
 
     def _update_file_count(self):
         count = self.table.rowCount()
         self.lbl_status.setText(f"已添加 {count} 个文件   |   拖拽或点击「添加文件」")
         self.lbl_status.repaint()
-        self.status_bar.setText(f"就绪  |  文件: {count}  |  输出: {self.output_dir}")
 
     def _toggle_log(self, checked):
         self.log_edit.setVisible(checked)
@@ -582,7 +554,6 @@ class ConverterApp(QWidget):
         self.progress.setFormat(f"0 / {n}")
         self.cancel_requested = False
         self.append_log(f"开始转换：{n} 个文件 → {self.output_dir}")
-        self.status_bar.setText(f"转换中  |  剩余: {n}  |  输出: {self.output_dir}")
 
         self.pdfs_generated = []
         self.remaining = n
@@ -853,6 +824,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
 
 
