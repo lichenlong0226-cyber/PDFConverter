@@ -1,14 +1,14 @@
-name: Build and release Windows installer
+﻿name: Build and release Windows installer
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   build-and-release-windows:
     runs-on: windows-latest
     env:
-      PYTHON_VERSION: '3.10'
+      PYTHON_VERSION: "3.10"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,7 +34,7 @@ jobs:
         run: |
           pyinstaller --noconfirm --onefile --windowed --icon=app_icon.ico main.py
           mkdir release_artifacts
-          copy dist\\main.exe release_artifacts\\PDFConverter.exe
+          copy dist\main.exe release_artifacts\PDFConverter.exe
         shell: cmd
 
       - name: Install NSIS
@@ -44,19 +44,19 @@ jobs:
 
       - name: Make installer with NSIS
         run: |
-          REM installer.nsi should write installer to release_artifacts\PDFConverter-setup.exe
-          makensis installer.nsi
-          set VERSION=%TAG%
-          powershell -Command "Rename-Item -Path 'release_artifacts\\PDFConverter-setup.exe' -NewName \"PDFConverter-setup-%VERSION%.exe\""
-        shell: cmd
+          & "makensis" installer.nsi
+          $version = "$env:TAG"
+          Rename-Item -Path "release_artifacts\PDFConverter-setup.exe" -NewName "PDFConverter-setup-$version.exe"
+        shell: powershell
         env:
           TAG: ${{ steps.get_version.outputs.TAG }}
 
       - name: Compute SHA256
         run: |
-          set VERSION=%TAG%
-          powershell -Command "Get-FileHash -Path \"release_artifacts\\PDFConverter-setup-%VERSION%.exe\" -Algorithm SHA256 | ForEach-Object { $_.Hash }" > release_artifacts\\PDFConverter-setup-%VERSION%.exe.sha256
-        shell: cmd
+          $version = "$env:TAG"
+          $hash = (Get-FileHash -Path "release_artifacts\PDFConverter-setup-$version.exe" -Algorithm SHA256).Hash
+          Set-Content -Path "release_artifacts\PDFConverter-setup-$version.exe.sha256" -Value $hash
+        shell: powershell
         env:
           TAG: ${{ steps.get_version.outputs.TAG }}
 
