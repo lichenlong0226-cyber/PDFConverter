@@ -25,7 +25,7 @@ from PySide6.QtGui import QIcon, QAction, QCursor, QFont
 from PySide6.QtWidgets import (QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout,
                                QPushButton, QFileDialog, QTableWidget, QTableWidgetItem,
                                QAbstractItemView, QHeaderView, QMessageBox, QCheckBox,
-                               QProgressBar, QMenu, QTextEdit, QLineEdit, QFrame,
+                               QGroupBox, QProgressBar, QMenu, QTextEdit, QLineEdit, QFrame,
                                QSizePolicy)
 
 IS_WINDOWS = platform.system() == "Windows"
@@ -57,7 +57,7 @@ SUPPORTED_EXT = (".doc", ".docx", ".xls", ".xlsx", ".xlsm", ".xlsb",
 
 # ----------------- CONFIG -----------------
 APP_NAME = "PDFConverter"
-APP_VERSION = "1.1.6"
+APP_VERSION = "1.1.7"
 GITHUB_OWNER = "lichenlong0226-cyber"
 GITHUB_REPO = "PDFConverter"
 ASSET_PREFIX = f"{APP_NAME}-setup-"
@@ -831,6 +831,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
