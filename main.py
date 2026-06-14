@@ -57,7 +57,7 @@ SUPPORTED_EXT = (".doc", ".docx", ".xls", ".xlsx", ".xlsm", ".xlsb",
 
 # ----------------- CONFIG -----------------
 APP_NAME = "PDFConverter"
-APP_VERSION = "1.2.2"
+APP_VERSION = "1.2.4"
 GITHUB_OWNER = "lichenlong0226-cyber"
 GITHUB_REPO = "PDFConverter"
 ASSET_PREFIX = f"{APP_NAME}-setup-"
@@ -233,6 +233,20 @@ class DropTable(QTableWidget):
             self.clearSelection()
             self.setCurrentIndex(QModelIndex())
         super().mousePressEvent(event)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.setDropAction(Qt.CopyAction)
+            event.accept()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.setDropAction(Qt.CopyAction)
+            event.accept()
+        else:
+            event.ignore()
 
     def dropEvent(self, event):
         if event.source() == self:
@@ -456,7 +470,7 @@ class ConverterApp(QWidget):
             QProgressBar::chunk { background: #3b82f6; border-radius: 2px; }
             QCheckBox { spacing: 6px; color: #18181b; }
             QCheckBox::indicator { width: 16px; height: 16px; border: 1px solid #a1a1aa; border-radius: 3px; background: #ffffff; }
-            QCheckBox::indicator:checked { background: #3b82f6; }
+            QCheckBox::indicator:checked { background: #ffffff; border: 2px solid #2563eb; }
             QLineEdit { background: #ffffff; border: 1px solid #d4d4d8; border-radius: 3px; padding: 4px 6px; color: #18181b; }
             QLineEdit:focus { border-color: #3b82f6; }
             QTextEdit { background: #fafafa; color: #18181b; font-family: Consolas, monospace; font-size: 10px; border: 1px solid #e4e4e7; border-radius: 3px; padding: 4px; }
@@ -758,32 +772,19 @@ class ConverterApp(QWidget):
                     pass
 
                 launched = False
-                # Method 1: PowerShell Unblock + Start-Process -Verb RunAs
                 try:
                     import subprocess
-                    subprocess.Popen(
-                        ["powershell", "-NoProfile", "-Command",
-                         f'Unblock-File "{launch_path}"; Start-Process -FilePath "{launch_path}" -Verb RunAs'],
-                        creationflags=0x08000000
-                    )
+                    subprocess.Popen([launch_path], shell=False)
                     launched = True
                 except Exception:
                     pass
-                # Method 2: ShellExecuteW runas
-                if not launched:
-                    try:
-                        import ctypes
-                        ctypes.windll.shell32.ShellExecuteW(None, "runas", launch_path, None, None, 1)
-                        launched = True
-                    except Exception:
-                        pass
                 self.append_log(f"安装包已下载到桌面：{desktop_installer}")
                 if launched:
-                    QMessageBox.information(self, "更新", "安装程序已启动，请在 UAC 对话框中点击「是」以完成安装。")
+                    QMessageBox.information(self, "更新", "安装程序已启动，安装完成后请重新启动程序。")
                 else:
                     QMessageBox.information(self, "更新",
                         f"未能自动启动安装程序。\n\n安装包已保存到桌面：\n{desktop_installer}\n\n"
-                        "请右键点击该文件 → 「以管理员身份运行」")
+                        "如果 Windows 智能应用控制拦截，请右键该文件 → 属性 → 勾选「解除锁定」→ 确定")
             else:
                 self.append_log("自动安装仅支持 Windows。")
                 QMessageBox.information(self, "更新", "已下载更新，但自动安装仅支持 Windows。")
@@ -812,6 +813,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
 
 
