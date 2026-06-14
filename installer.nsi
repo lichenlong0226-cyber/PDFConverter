@@ -1,7 +1,7 @@
 ﻿; installer.nsi
 OutFile "release_artifacts\\PDFConverter-setup.exe"
 InstallDir "$LOCALAPPDATA\\PDFConverter"
-RequestExecutionLevel user
+RequestExecutionLevel admin
 
 Page directory
 Page instfiles
@@ -19,3 +19,4 @@ Section "Uninstall"
   Delete "$DESKTOP\\PDFConverter.lnk"
   RMDir "$INSTDIR"
 SectionEnd
+

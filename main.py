@@ -57,7 +57,7 @@ SUPPORTED_EXT = (".doc", ".docx", ".xls", ".xlsx", ".xlsm", ".xlsb",
 
 # ----------------- CONFIG -----------------
 APP_NAME = "PDFConverter"
-APP_VERSION = "1.2.4"
+APP_VERSION = "1.2.6"
 GITHUB_OWNER = "lichenlong0226-cyber"
 GITHUB_REPO = "PDFConverter"
 ASSET_PREFIX = f"{APP_NAME}-setup-"
@@ -469,8 +469,6 @@ class ConverterApp(QWidget):
             QProgressBar { background: #f4f4f5; border: 1px solid #d4d4d8; border-radius: 3px; text-align: center; color: #52525b; font-size: 11px; }
             QProgressBar::chunk { background: #3b82f6; border-radius: 2px; }
             QCheckBox { spacing: 6px; color: #18181b; }
-            QCheckBox::indicator { width: 16px; height: 16px; border: 1px solid #a1a1aa; border-radius: 3px; background: #ffffff; }
-            QCheckBox::indicator:checked { background: #ffffff; border: 2px solid #2563eb; }
             QLineEdit { background: #ffffff; border: 1px solid #d4d4d8; border-radius: 3px; padding: 4px 6px; color: #18181b; }
             QLineEdit:focus { border-color: #3b82f6; }
             QTextEdit { background: #fafafa; color: #18181b; font-family: Consolas, monospace; font-size: 10px; border: 1px solid #e4e4e7; border-radius: 3px; padding: 4px; }
@@ -813,6 +811,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
 
 
