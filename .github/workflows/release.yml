@@ -37,26 +37,34 @@ jobs:
           copy dist\main.exe release_artifacts\PDFConverter.exe
         shell: cmd
 
-      - name: Install NSIS
+      - name: Install NSIS and build installer
+        shell: powershell
         run: |
           choco install nsis -y
-        shell: cmd
-
-      - name: Make installer with NSIS
-        run: |
-          & "makensis" installer.nsi
+          $makensis = $null
+          $searchPaths = @(
+            "$env:ChocolateyInstall\lib\nsis\tools",
+            "$env:ProgramFiles\NSIS",
+            "${env:ProgramFiles(x86)}\NSIS"
+          )
+          foreach ($p in $searchPaths) {
+            $found = Get-ChildItem -Path $p -Recurse -Filter makensis.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) { $makensis = $found.FullName; break }
+          }
+          if (-not $makensis) { throw "makensis.exe not found after NSIS installation" }
+          Write-Host "Found makensis at: $makensis"
+          & $makensis installer.nsi
           $version = "$env:TAG"
           Rename-Item -Path "release_artifacts\PDFConverter-setup.exe" -NewName "PDFConverter-setup-$version.exe"
-        shell: powershell
         env:
           TAG: ${{ steps.get_version.outputs.TAG }}
 
       - name: Compute SHA256
+        shell: powershell
         run: |
           $version = "$env:TAG"
           $hash = (Get-FileHash -Path "release_artifacts\PDFConverter-setup-$version.exe" -Algorithm SHA256).Hash
           Set-Content -Path "release_artifacts\PDFConverter-setup-$version.exe.sha256" -Value $hash
-        shell: powershell
         env:
           TAG: ${{ steps.get_version.outputs.TAG }}
 
