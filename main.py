@@ -42,9 +42,9 @@ else:
 
 # PDF merger lib
 try:
-    from pypdf import PdfMerger
+    from pypdf import PdfWriter
 except Exception:
-    PdfMerger = None
+    PdfWriter = None
 
 # Networking for auto-update
 try:
@@ -53,11 +53,11 @@ except Exception:
     requests = None
 
 SUPPORTED_EXT = (".doc", ".docx", ".xls", ".xlsx", ".xlsm", ".xlsb",
-                 ".odt", ".ods", ".rtf", ".docm")
+                 ".odt", ".ods", ".rtf", ".docm", ".pdf")
 
 # ----------------- CONFIG -----------------
 APP_NAME = "PDFConverter"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 GITHUB_OWNER = "lichenlong0226-cyber"
 GITHUB_REPO = "pdf"
 ASSET_PREFIX = f"{APP_NAME}-setup-"
@@ -153,8 +153,8 @@ def convert_excel_windows(in_path: str, out_path: str):
             pass
 
 def ensure_pdf_merger_available():
-    if PdfMerger is None:
-        raise RuntimeError("pypdf is required for merging PDFs. Install with `pip install pypdf`.")
+    if PdfWriter is None:
+        raise RuntimeError("pypdf is required for merging PDFs.")
 
 
 class WorkerSignals(QObject):
@@ -179,6 +179,16 @@ class ConvertWorker(QRunnable):
             while target.exists():
                 target = Path(self.out_dir) / f"{base}({cnt}).pdf"
                 cnt += 1
+            if ext == ".pdf":
+                target = Path(self.out_dir) / Path(self.in_path).name
+                cnt = 1
+                while target.exists():
+                    target = Path(self.out_dir) / f"{Path(self.in_path).stem}({cnt}).pdf"
+                    cnt += 1
+                shutil.copy2(self.in_path, str(target))
+                self.signals.log.emit(f"复制 PDF：{Path(self.in_path).name}")
+                self.signals.finished.emit(self.in_path, str(target))
+                return
             if IS_WINDOWS and ext in (".doc", ".docx", ".docm", ".rtf"):
                 self.signals.log.emit(f"使用 Word COM 转换：{Path(self.in_path).name}")
                 convert_word_windows(self.in_path, str(target))
@@ -502,7 +512,7 @@ class ConverterApp(QWidget):
         if IS_WINDOWS and win32com is None:
             QMessageBox.critical(self, "错误", "pywin32 未正确打包，请确保构建时包含该模块。")
             return
-        if self.chk_merge.isChecked() and PdfMerger is None:
+        if self.chk_merge.isChecked() and PdfWriter is None:
             QMessageBox.critical(self, "错误", "pypdf 未正确打包，请确保构建时包含该模块。")
             return
         if requests is None:
@@ -582,7 +592,7 @@ class ConverterApp(QWidget):
         if not merged_name:
             QMessageBox.information(self, "完成", "已转换完成（未保存合并结果）。")
             return
-        merger = PdfMerger()
+        merger = PdfWriter()
         try:
             for p in self.pdfs_generated:
                 merger.append(p)
@@ -728,3 +738,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
