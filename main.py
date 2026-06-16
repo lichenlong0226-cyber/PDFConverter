@@ -57,7 +57,7 @@ SUPPORTED_EXT = (".doc", ".docx", ".xls", ".xlsx", ".xlsm", ".xlsb",
 
 # ----------------- CONFIG -----------------
 APP_NAME = "PDFConverter"
-APP_VERSION = "1.2.7"
+APP_VERSION = "1.2.9"
 GITHUB_OWNER = "lichenlong0226-cyber"
 GITHUB_REPO = "PDFConverter"
 ASSET_PREFIX = f"{APP_NAME}-setup-"
@@ -318,7 +318,7 @@ class DropTable(QTableWidget):
         if ext not in SUPPORTED_EXT:
             return False
         for row in range(self.rowCount()):
-            if self.item(row, 0).data(Qt.UserRole) == path:
+            if self.item(row, 1) and self.item(row, 1).data(Qt.UserRole) == path:
                 return False
         row = self.rowCount()
         self.insertRow(row)
@@ -587,7 +587,7 @@ class ConverterApp(QWidget):
         self.remaining = n
 
         for i in range(n):
-            in_path = self.table.item(i, 0).data(Qt.UserRole)
+            in_path = self.table.item(i, 1).data(Qt.UserRole)
             self.table.setItem(i, 1, QTableWidgetItem("等待中"))
             worker = ConvertWorker(in_path, self.output_dir)
             worker.signals.started.connect(lambda p: self.on_started(p))
@@ -599,7 +599,7 @@ class ConverterApp(QWidget):
     def on_started(self, path):
         self.append_log(f"[启动] {Path(path).name}")
         for r in range(self.table.rowCount()):
-            if self.table.item(r, 0).data(Qt.UserRole) == path:
+            if self.table.item(r, 1) and self.table.item(r, 1).data(Qt.UserRole) == path:
                 item = QTableWidgetItem("处理中")
                 item.setTextAlignment(Qt.AlignCenter)
                 self.table.setItem(r, 1, item)
@@ -610,7 +610,7 @@ class ConverterApp(QWidget):
     def on_finished(self, path, out_or_err):
         self.active_workers.pop(path, None)
         for r in range(self.table.rowCount()):
-            if self.table.item(r, 0).data(Qt.UserRole) == path:
+            if self.table.item(r, 1) and self.table.item(r, 1).data(Qt.UserRole) == path:
                 if out_or_err.startswith("ERR:"):
                     item = QTableWidgetItem("❌ 失败")
                     item.setTextAlignment(Qt.AlignCenter)
@@ -843,6 +843,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
 
 
