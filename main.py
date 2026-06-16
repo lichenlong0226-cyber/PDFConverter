@@ -57,7 +57,7 @@ SUPPORTED_EXT = (".doc", ".docx", ".xls", ".xlsx", ".xlsm", ".xlsb",
 
 # ----------------- CONFIG -----------------
 APP_NAME = "PDFConverter"
-APP_VERSION = "1.2.9"
+APP_VERSION = "1.3.0"
 GITHUB_OWNER = "lichenlong0226-cyber"
 GITHUB_REPO = "PDFConverter"
 ASSET_PREFIX = f"{APP_NAME}-setup-"
@@ -216,15 +216,17 @@ class DropTable(QTableWidget):
     def __init__(self, parent=None):
         super().__init__(0, 4, parent)
         self.setHorizontalHeaderLabels(["序号", "文件", "状态", "大小"])
-        self.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents); self.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        self.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.horizontalHeader().setSectionResizeMode(0, QHeaderView.Fixed)
+        self.setColumnWidth(0, 40)
+        self.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self._on_context_menu)
         self.setAcceptDrops(True)
-        self.setDragDropMode(QAbstractItemView.InternalMove)
+        self.setDragDropMode(QAbstractItemView.DragDrop)
         self.verticalHeader().setVisible(False)
 
     def _renumber_rows(self):
@@ -843,6 +845,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
